@@ -94,6 +94,12 @@ Save and exit.
 
 ---
 
+## download firmware
+sudo mkdir -p /lib/firmware/rtw88
+cd /lib/firmware/rtw88
+sudo wget https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/plain/rtw88/rtw8812a_fw.bin
+
+
 ## 🔄 Reboot and Verify Kernel
 
 Reboot:
@@ -160,6 +166,10 @@ sudo nano /boot/config.txt  # Add kernel=mykernel.img
 sudo reboot
 uname -r
 sudo modprobe rtw88_8812au
+sudo mkdir -p /lib/firmware/rtw88
+cd /lib/firmware/rtw88
+sudo wget https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/plain/rtw88/rtw8812a_fw.bin
+
 echo 0bda 8812 | sudo tee /sys/bus/usb/drivers/rtw88_8812au/new_id
 iw dev
 ```
