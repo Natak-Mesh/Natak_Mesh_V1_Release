@@ -1,0 +1,165 @@
+the 6.14 kernel should ahve the built in drivers for the awus036ach. have confirmed this process will get the card to load still needs function testing
+
+# Raspberry Pi 4: Building and Installing 6.14 Kernel with RTL8812AU Support
+
+This guide details the exact steps (tested) to compile and install the Raspberry Pi Foundation’s **rpi-6.14.y** kernel on a Pi 4 (64-bit), and enable the Alfa AWUS036ACH (RTL8812AU) using the upstream `rtw88_8812au` driver.
+
+---
+
+## 📦 Prerequisites
+
+* Raspberry Pi 4 with 64-bit Raspberry Pi OS
+* Internet connection
+* 4GB+ free space
+
+Install required build tools:
+
+```bash
+sudo apt update
+sudo apt install -y git bc bison flex libssl-dev make libc6-dev libncurses5-dev
+```
+
+---
+
+## ⬇️ Download Kernel Source
+
+```bash
+cd ~
+git clone --depth=1 --branch rpi-6.14.y https://github.com/raspberrypi/linux.git
+cd linux
+```
+
+---
+
+## ⚙️ Configure Kernel
+
+Set default Pi 4 (64-bit) config:
+
+```bash
+KERNEL=mykernel.img
+make bcm2711_defconfig
+```
+
+---
+
+## 🔨 Build Kernel, Modules, and Device Trees
+
+```bash
+make -j$(nproc) Image modules dtbs
+```
+
+---
+
+## 📥 Install Modules
+
+```bash
+sudo make modules_install
+```
+
+---
+
+## 🚨 Copy Kernel to Boot Partition (Important)
+
+Copy the compiled kernel image to the firmware boot partition and rename it:
+
+```bash
+sudo cp arch/arm64/boot/Image /boot/firmware/mykernel.img
+```
+
+Update device trees and overlays:
+
+```bash
+sudo cp arch/arm64/boot/dts/broadcom/*.dtb /boot/
+sudo cp arch/arm64/boot/dts/overlays/*.dtb* /boot/overlays/
+sudo cp arch/arm64/boot/dts/overlays/README /boot/overlays/
+```
+
+---
+
+## ⚙️ Update Boot Configuration
+
+Edit the boot config to load your custom kernel:
+
+```bash
+sudo nano /boot/config.txt
+```
+
+Add or update:
+
+```
+kernel=mykernel.img
+```
+
+Save and exit.
+
+---
+
+## 🔄 Reboot and Verify Kernel
+
+Reboot:
+
+```bash
+sudo reboot
+```
+
+After reboot, confirm the kernel version:
+
+```bash
+uname -r
+```
+
+You should see `6.14.y`.
+
+---
+
+## 📡 Enable RTL8812AU Driver
+
+Manually load the driver:
+
+```bash
+sudo modprobe rtw88_8812au
+```
+
+If the AWUS036ACH is not automatically bound, add its USB ID:
+
+```bash
+echo 0bda 8812 | sudo tee /sys/bus/usb/drivers/rtw88_8812au/new_id
+```
+
+---
+
+## ✅ Confirm Wi-Fi Interface
+
+List wireless interfaces:
+
+```bash
+iw dev
+```
+
+Look for `wlan1` or similar.
+
+---
+
+## 📌 Full Command Summary
+
+```bash
+sudo apt update
+sudo apt install -y git bc bison flex libssl-dev make libc6-dev libncurses5-dev
+cd ~
+git clone --depth=1 --branch rpi-6.14.y https://github.com/raspberrypi/linux.git
+cd linux
+KERNEL=mykernel.img
+make bcm2711_defconfig
+make -j$(nproc) Image modules dtbs
+sudo make modules_install
+sudo cp arch/arm64/boot/Image /boot/firmware/mykernel.img
+sudo cp arch/arm64/boot/dts/broadcom/*.dtb /boot/
+sudo cp arch/arm64/boot/dts/overlays/*.dtb* /boot/overlays/
+sudo cp arch/arm64/boot/dts/overlays/README /boot/overlays/
+sudo nano /boot/config.txt  # Add kernel=mykernel.img
+sudo reboot
+uname -r
+sudo modprobe rtw88_8812au
+echo 0bda 8812 | sudo tee /sys/bus/usb/drivers/rtw88_8812au/new_id
+iw dev
+```
