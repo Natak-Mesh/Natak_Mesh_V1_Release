@@ -28,17 +28,32 @@ Zorro (USB HID) → Ground Pi (MAVProxy) → 802.11s mesh UDP
 | smcroute + br-lan | Multicast routing — drone acts as a full mesh point |
 | hostapd (wlan0) | 5.8 GHz AP for local device access |
 | eth0 | WAN/LAN, USB ethernet for bench updates |
-| Tailscale | Remote admin |
+
+## Hardware
+
+| Part | Role |
+|---|---|
+| Matek H743-SLIM V2 | Flight controller, ArduPilot Copter `MatekH743` |
+| MicoAir MTF-01 | Lidar rangefinder + optical flow — AltHold and Loiter |
+| LDRobot D500 | 360° scanning lidar — collision avoidance |
+| Pi Zero 2 W | Companion computer, mesh node, MAVLink bridge |
+| RadioMaster Zorro | Pilot controller, USB HID joystick via EdgeTX |
+
+Full parts list and wiring in [`docs/drone/drone-hardware.md`](docs/drone/drone-hardware.md).
 
 ## Install
 
 ```bash
 ./install-packages.sh     # packages + builds mavlink-router from source
-# edit /etc/nucleus/mesh.conf for this node
-./deploy.sh
+./deploy.sh               # installs /etc/nucleus/mesh.conf
+# now edit /etc/nucleus/mesh.conf for this node
 sudo /opt/nucleus/bin/config_generation.sh
 sudo reboot
 ```
+
+`deploy.sh` creates `/etc/nucleus/mesh.conf`, so it has to run before the file
+can be edited. On a node that already has one, existing values are preserved
+and only missing keys are added.
 
 ### UART prerequisite
 
