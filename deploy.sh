@@ -24,6 +24,14 @@ echo "Deploying from $SOURCE_DIR..."
 # Unblock Bluetooth
 sudo rfkill unblock bluetooth
 
+# Mask wpa_supplicant.service - 'disable' does NOT prevent D-Bus activation
+# (/usr/share/dbus-1/system-services/fi.w1.wpa_supplicant1.service maps the bus
+# name to SystemdService=wpa_supplicant.service), so NetworkManager can start it
+# on demand and it fights mesh-start.sh's explicit wlan1 instance for the phy.
+# mesh-start.sh calls the binary directly, so masking the unit does not affect it.
+sudo systemctl mask wpa_supplicant.service
+sudo pkill -f 'wpa_supplicant -u -s' || true
+
 # Copy etc files (only static configs - generated ones are created by config_generation.sh)
 sudo mkdir -p /etc/nucleus
 if [ ! -f /etc/nucleus/mesh.conf ] || [ "$FORCE_CONFIG" = "true" ]; then
