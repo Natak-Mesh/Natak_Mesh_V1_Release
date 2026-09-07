@@ -2,9 +2,6 @@
 
 # Nucleus OS (Drone) - Package Installation Script
 # Install all required software packages for a fresh drone companion node
-#
-# NOTE: Tailscale is installed but NOT enabled by default
-#       To activate: sudo systemctl enable --now tailscaled && sudo tailscale up
 
 set -e
 
@@ -79,13 +76,6 @@ if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' ~/.bashrc; then
     echo "Added ~/.local/bin to PATH in ~/.bashrc"
 fi
 
-# Install Tailscale
-echo "Installing Tailscale..."
-curl -fsSL https://tailscale.com/install.sh | sh
-# Enable Tailscale daemon (user can configure profiles manually when ready)
-sudo systemctl enable tailscaled
-sudo systemctl start tailscaled
-
 # Enable services
 echo "Enabling services..."
 sudo systemctl enable NetworkManager
@@ -108,10 +98,7 @@ echo "     sudo reboot"
 echo "   Verify with: python3 /opt/nucleus/drone/fc-link-check.py"
 echo "   Details: docs/drone/uart-setup.md"
 echo ""
-echo "3. Tailscale is installed but NOT connected."
-echo "   - Connect: sudo tailscale up"
-echo ""
-echo "4. Reload your shell or run: source ~/.bashrc"
+echo "3. Reload your shell or run: source ~/.bashrc"
 echo ""
 echo "Next step: Run ./deploy.sh to deploy Nucleus configuration files"
 echo ""
