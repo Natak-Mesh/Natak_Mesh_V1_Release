@@ -36,6 +36,7 @@ Zorro (USB HID) → Ground Pi (MAVProxy) → 802.11s mesh UDP
 | Matek H743-SLIM V2 | Flight controller, ArduPilot Copter `MatekH743` |
 | MicoAir MTF-01 | Lidar rangefinder + optical flow — AltHold and Loiter |
 | LDRobot D500 | 360° scanning lidar — collision avoidance |
+| Arducam IMX708 | 12MP wide CSI camera — forward video |
 | Pi Zero 2 W | Companion computer, mesh node, MAVLink bridge |
 | RadioMaster Zorro | Pilot controller, USB HID joystick via EdgeTX |
 

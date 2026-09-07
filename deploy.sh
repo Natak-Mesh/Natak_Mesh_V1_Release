@@ -128,6 +128,14 @@ sudo chown -R natak:natak /opt/nucleus/
 sudo systemctl disable wpa_supplicant.service
 sudo systemctl stop wpa_supplicant.service
 
+# Mask wpa_supplicant.service - 'disable' does NOT prevent D-Bus activation
+# (/usr/share/dbus-1/system-services/fi.w1.wpa_supplicant1.service maps the bus
+# name to SystemdService=wpa_supplicant.service), so NetworkManager can start it
+# on demand and it fights mesh-start.sh's explicit wlan1 instance for the phy.
+# mesh-start.sh calls the binary directly, so masking the unit does not affect it.
+sudo systemctl mask wpa_supplicant.service
+sudo pkill -f 'wpa_supplicant -u -s' || true
+
 # Enable hostapd for wireless AP
 sudo systemctl unmask hostapd.service
 sudo systemctl enable hostapd.service

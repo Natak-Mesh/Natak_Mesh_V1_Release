@@ -50,6 +50,54 @@ Planner's "Status" page — `opt_qua` and `rangefinder1` should have some value.
 
 Connected via USB to the companion computer.
 
+### Arducam IMX708
+
+Connected to the Pi's CSI ribbon connector — Unicam 1, the standard camera port.
+Not on a UART, so it does not compete with the FC link or the MTF-01.
+
+| Property | Value |
+|---|---|
+| Sensor | Sony IMX708, 4608x2592, 10-bit RGGB |
+| Detected as | `imx708_wide` |
+| Bus | CSI-2 / Unicam 1, i2c-10 addr `0x1a` |
+| Autofocus | VCM lens driver, i2c-10 addr `0x0c` |
+
+No `/boot/firmware/config.txt` changes are needed. `camera_auto_detect=1` is set
+on the stock image and loads the `imx708` overlay automatically — the vendor
+instructions to set `camera_auto_detect=0` with an explicit `dtoverlay=imx708`
+only apply when auto-detect fails.
+
+Verify with `rpicam-hello --list-cameras`. `vcgencmd get_camera` reports
+`detected=0` even when working — it only knows the removed legacy MMAL stack.
+
+### Video to QGroundControl
+
+The camera is independent of the flight controller — video and MAVLink are two
+separate streams that the GCS composites at display time.
+
+```bash
+rpicam-vid -t 0 --width 1280 --height 720 --framerate 30 \
+  --codec h264 --inline -n \
+  --bitrate 2000000 --intra 30 --profile baseline \
+  -o udp://<gcs-ip>:5600
+```
+
+QGC: Application Settings → Video → source `UDP h.264`, port `5600`.
+
+UDP not TCP — no ACKs or retransmits to consume airtime on the half-duplex
+mesh. `--inline` repeats SPS/PPS so a client can join mid-stream, `--intra 30`
+gives 1s keyframes for fast recovery, `--profile baseline` avoids B-frame
+reordering delay.
+
+**Not persistent — must be started manually after every boot.** A
+`nucleus-video.service` gated on `DRONE_ENABLED`, following the
+`mavlink-router.service` pattern, is the obvious fix. Not yet built.
+
+Only one process can hold the camera at a time. If a second `rpicam-vid` is
+started it may take the port but fail to get the sensor (`Device or resource
+busy`, `Failed to queue buffer`), accepting connections while sending no
+frames. Fix with `pkill -f rpicam-vid`, then start one instance.
+
 ## FC UART Allocation
 
 Through-holes on the H743-SLIM are silkscreened with the STM32 UART number,
