@@ -218,6 +218,20 @@ Address = 0.0.0.0
 Port = ${MAVLINK_UDP_PORT}
 EOF
 
+# Optional push endpoint. The server above waits for a GCS to speak first,
+# which means nothing crosses the mesh until the ground station sends a
+# packet. Setting MAVLINK_GCS_IP adds a Client endpoint that streams to that
+# address unprompted, so telemetry flows as soon as both nodes are up.
+if [ -n "${MAVLINK_GCS_IP}" ]; then
+cat >> /etc/mavlink-router/main.conf <<EOF
+
+[UdpEndpoint gcs_push]
+Mode = Normal
+Address = ${MAVLINK_GCS_IP}
+Port = ${MAVLINK_UDP_PORT}
+EOF
+fi
+
     systemctl enable mavlink-router.service >/dev/null 2>&1 || true
 
     # Verify the UART is ready for the flight controller link.
