@@ -273,4 +273,33 @@ else
     systemctl disable --now mavlink-router.service >/dev/null 2>&1 || true
 fi
 
+# ============================================================
+# LiDAR bridge
+# ============================================================
+# The LD06/LD19 hangs off a CP2102 USB-UART bridge, not a GPIO UART, so it
+# never contends with the FC link on /dev/ttyAMA0. lidar-bridge.py decodes
+# the sensor's native 47-byte frames and injects DISTANCE_SENSOR into
+# mavlink-router on localhost, which fans it out to every GCS on the mesh.
+#
+# The unit carries ConditionPathExists on the flag file below, so removing
+# it is what keeps the bridge inert on nodes without a LiDAR fitted.
+# Requires the drone role, since without mavlink-router there is nothing
+# to inject into.
+if [ "${DRONE_ENABLED}" = "true" ] && [ "${LIDAR_ENABLED}" = "true" ]; then
+    touch /etc/nucleus/lidar-bridge.enabled
+    systemctl enable lidar-bridge.service >/dev/null 2>&1 || true
+
+    if [ ! -e "${LIDAR_SERIAL:-/dev/ttyUSB0}" ]; then
+        echo ""
+        echo "  NOTE: ${LIDAR_SERIAL:-/dev/ttyUSB0} not present. The LiDAR is"
+        echo "  either unplugged or still enumerating. lidar-bridge.service"
+        echo "  retries on a timer, so it will pick the sensor up when it"
+        echo "  appears - no action needed if it is plugged in later."
+        echo ""
+    fi
+else
+    rm -f /etc/nucleus/lidar-bridge.enabled
+    systemctl disable --now lidar-bridge.service >/dev/null 2>&1 || true
+fi
+
 echo "Configuration files generated successfully."

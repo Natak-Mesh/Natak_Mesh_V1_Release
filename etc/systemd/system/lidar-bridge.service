@@ -1,0 +1,21 @@
+[Unit]
+Description=LiDAR to MAVLink Bridge (LD06 USB to DISTANCE_SENSOR)
+After=mavlink-router.service
+Wants=mavlink-router.service
+ConditionPathExists=/etc/nucleus/lidar-bridge.enabled
+
+[Service]
+Type=simple
+# Runs as natak because pymavlink is installed under ~natak/.local rather
+# than system-wide. natak is in the dialout group, which is what grants
+# access to the LiDAR's /dev/ttyUSB0.
+User=natak
+Group=dialout
+ExecStart=/usr/bin/python3 /opt/nucleus/drone/lidar-bridge.py
+Restart=always
+RestartSec=2
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
