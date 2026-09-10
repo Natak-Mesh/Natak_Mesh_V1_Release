@@ -52,7 +52,13 @@ Generates all configuration files from `/etc/nucleus/mesh.conf`.
 | `/etc/hostapd/hostapd.conf` | Access point config |
 | `/etc/wpa_supplicant/wpa_supplicant-wlan1-encrypt.conf` | Mesh encryption (SAE) |
 | `/etc/babeld.conf` | Babel routing daemon config |
-| `/etc/mavlink-router/main.conf` | FC UART ↔ mesh UDP bridge |
+| `/etc/mavlink-router/main.conf` | FC UART ↔ mesh UDP bridge (only when `DRONE_ENABLED=true`) |
+| `/etc/nucleus/lidar-bridge.enabled` | Flag file gating `lidar-bridge.service` (only when `LIDAR_ENABLED=true`) |
+
+Both MAVLink outputs are gated rather than always-on. `mavlink-router.service`
+carries `ConditionPathExists` on its config file and `lidar-bridge.service` on
+the flag file, so setting either switch to `false` removes the file and leaves
+the unit inert — no process, no UART held.
 
 **Usage:**
 ```bash
@@ -136,9 +142,15 @@ All scripts source `/etc/nucleus/mesh.conf`:
 | `MESH_MCAST_TTL` | mesh-start | `8` |
 | `MESH_802_TTL` | mesh-start | `8` |
 | `MESH_RTS_THRESHOLD` | mesh-start | `500` |
+| `DRONE_ENABLED` | config_gen | `true` |
 | `MAVLINK_SERIAL` | config_gen | `/dev/ttyAMA0` |
 | `MAVLINK_BAUD` | config_gen | `921600` |
 | `MAVLINK_UDP_PORT` | config_gen | `14550` |
+| `MAVLINK_GCS_IP` | config_gen | `10.20.1.42` (empty = inbound only) |
+| `LIDAR_ENABLED` | config_gen | `false` |
+| `LIDAR_SERIAL` | config_gen, lidar-bridge.py | `/dev/ttyUSB0` |
+| `LIDAR_BAUD` | lidar-bridge.py | `230400` |
+| `LIDAR_ORIENTATION` | lidar-bridge.py | `25` (down) |
 
 ---
 
@@ -148,6 +160,7 @@ All scripts source `/etc/nucleus/mesh.conf`:
 |---------|--------|-------------|
 | `mesh-start.service` | mesh-start.sh | Main mesh startup |
 | `mavlink-router.service` | - | FC UART ↔ mesh UDP |
+| `lidar-bridge.service` | `/opt/nucleus/drone/lidar-bridge.py` | LD06 LiDAR → `DISTANCE_SENSOR` into the router |
 | `babeld.service` | - | Babel routing daemon |
 | `smcroute.service` | - | Multicast routing |
 | `hostapd.service` | - | Access point (wlan0) |
@@ -158,3 +171,4 @@ All scripts source `/etc/nucleus/mesh.conf`:
 3. babeld.service (routing)
 4. hostapd.service (AP)
 5. mavlink-router.service (FC link)
+6. lidar-bridge.service (`After=`/`Wants=mavlink-router.service`)

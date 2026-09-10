@@ -91,14 +91,16 @@ sudo chown root:root /etc/sudoers.d/nucleus-config
 sudo cp "$SOURCE_DIR/etc/systemd/system/brlan-setup.service" /etc/systemd/system/
 sudo cp "$SOURCE_DIR/etc/systemd/system/mesh-start.service" /etc/systemd/system/
 sudo cp "$SOURCE_DIR/etc/systemd/system/mavlink-router.service" /etc/systemd/system/
+sudo cp "$SOURCE_DIR/etc/systemd/system/lidar-bridge.service" /etc/systemd/system/
 sudo mkdir -p /etc/systemd/system/babeld.service.d
 sudo cp "$SOURCE_DIR/etc/systemd/system/babeld.service.d/override.conf" /etc/systemd/system/babeld.service.d/
 sudo systemctl daemon-reload
 sudo systemctl enable brlan-setup.service
 sudo systemctl enable mesh-start.service
-# mavlink-router.service is installed above but deliberately not enabled here.
-# config_generation.sh enables or disables it based on DRONE_ENABLED in
-# /etc/nucleus/mesh.conf, after the user has had a chance to set that value.
+# mavlink-router.service and lidar-bridge.service are installed above but
+# deliberately not enabled here. config_generation.sh enables or disables them
+# based on DRONE_ENABLED and LIDAR_ENABLED in /etc/nucleus/mesh.conf, after the
+# user has had a chance to set those values.
 
 # Copy opt files
 sudo mkdir -p /opt/nucleus/bin
@@ -116,9 +118,11 @@ sudo chmod +x /opt/nucleus/bin/sd-wear-setup.sh
 sudo chmod +x /opt/nucleus/bin/iw-wifi-scan.sh
 
 # Copy drone MAVLink tools
+# Only the .py files: a plain cp -r of the directory drags __pycache__ along
+# with it, which then ships stale bytecode to every node.
 if [ -d "$SOURCE_DIR/opt/nucleus/drone" ]; then
     sudo mkdir -p /opt/nucleus/drone
-    sudo cp -r "$SOURCE_DIR/opt/nucleus/drone/"* /opt/nucleus/drone/
+    sudo cp "$SOURCE_DIR/opt/nucleus/drone/"*.py /opt/nucleus/drone/
     sudo chmod +x /opt/nucleus/drone/*.py
 fi
 

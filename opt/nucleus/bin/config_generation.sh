@@ -220,8 +220,13 @@ EOF
 
 # Optional push endpoint. The server above waits for a GCS to speak first,
 # which means nothing crosses the mesh until the ground station sends a
-# packet. Setting MAVLINK_GCS_IP adds a Client endpoint that streams to that
+# packet. Setting MAVLINK_GCS_IP adds a push endpoint that streams to that
 # address unprompted, so telemetry flows as soon as both nodes are up.
+#
+# This build of mavlink-router spells the push mode "Normal". "Client" is
+# rejected at parse time and the daemon exits with:
+#     Unknown 'mode' key: Client
+# Do not "correct" Normal to Client.
 if [ -n "${MAVLINK_GCS_IP}" ]; then
 cat >> /etc/mavlink-router/main.conf <<EOF
 
